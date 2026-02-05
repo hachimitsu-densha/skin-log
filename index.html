@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SkinLog | Beauty AI</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#F3EFE7',
+                        sage: {
+                            DEFAULT: '#6B7F61',
+                            dark: '#54634C',
+                            light: '#E6E9E4'
+                        },
+                        brown: {
+                            text: '#4A4A4A',
+                            accent: '#8C8C8C'
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"DM Serif Display"', 'serif'],
+                        sans: ['"Inter"', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(107, 127, 97, 0.15)',
+                        'float': '0 10px 30px -5px rgba(0, 0, 0, 0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #F3EFE7; -webkit-tap-highlight-color: transparent; font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Dashed Border for Empty States */
+        .dashed-border {
+            background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='32' ry='32' stroke='%23D1D5DB' stroke-width='2' stroke-dasharray='8%2c8' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+        }
+        
+        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Navigation Bubble Animations */
+        .nav-btn {
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .nav-active {
+            width: 3.5rem;
+            height: 3.5rem;
+            background-color: #6B7F61;
+            color: white !important;
+            box-shadow: 0 8px 15px -3px rgba(107, 127, 97, 0.4);
+            transform: translateY(-4px) scale(1.1);
+        }
+        .nav-inactive {
+            width: 3rem;
+            height: 3rem;
+            background-color: transparent;
+            color: #D1D5DB !important;
+        }
+    </style>
+</head>
+<body class="text-brown-text antialiased min-h-screen pb-32">
+
+    <!-- HEADER -->
+    <header class="pt-8 pb-4 flex flex-col items-center justify-center space-y-3">
+        <!-- Botanical Logo Icon -->
+        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm text-sage">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/>
+                <path d="M19 2L20 5L23 6L20 7L19 10L18 7L15 6L18 5L19 2Z" opacity="0.4"/>
+            </svg>
+        </div>
+        
+        <!-- Premium Serif Title -->
+        <h1 class="font-serif italic text-4xl text-sage-dark tracking-wide">SkinLog</h1>
+        
+        <!-- Date Display Pill -->
+        <div class="bg-white px-5 py-1.5 rounded-full shadow-sm">
+            <span class="text-[10px] font-black tracking-[0.2em] text-brown-accent uppercase" id="headerDate">THU 5</span>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto px-6 space-y-6">
+
+        <!-- TAB: ROUTINE -->
+        <div id="tab-routine" class="fade-in space-y-6">
+            
+            <!-- 2x2 GOAL GRID -->
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="setGoal('Clear Pores')" id="btn-clear" class="goal-btn py-3.5 rounded-2xl text-xs font-bold transition-all bg-sage text-white shadow-soft flex items-center justify-center gap-2">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                    Clear Pores
+                </button>
+                <button onclick="setGoal('Anti-Aging')" id="btn-anti" class="goal-btn py-3.5 rounded-2xl text-xs font-bold bg-white text-gray-500 shadow-sm transition-all">
+                    Anti-Aging
+                </button>
+                <button onclick="setGoal('Whitening')" id="btn-whitening" class="goal-btn py-3.5 rounded-2xl text-xs font-bold bg-white text-gray-500 shadow-sm transition-all">
+                    Texture/Glow
+                </button>
+                <button onclick="setGoal('Barrier Recovery')" id="btn-barrier" class="goal-btn py-3.5 rounded-2xl text-xs font-bold bg-white text-gray-500 shadow-sm transition-all">
+                    Barrier Recovery
+                </button>
+            </div>
+
+            <!-- MEDICUBE TOGGLE -->
+            <div class="bg-white rounded-full p-2 pl-6 pr-3 shadow-sm flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="text-amber-600">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    </div>
+                    <span class="font-serif italic text-xl text-gray-800">Medicube Device</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="deviceToggle" class="sr-only peer">
+                    <div class="w-12 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-sage"></div>
+                </label>
+            </div>
+
+            <!-- EMPTY SHELF -->
+            <div id="emptyShelfState" class="bg-white rounded-[40px] p-12 text-center dashed-border">
+                <p class="font-serif italic text-gray-400 text-lg mb-4">Your digital shelf is empty.</p>
+                <button onclick="switchTab('shelf')" class="text-sage font-bold underline decoration-2 underline-offset-4 text-sm">
+                    + Add products to start
+                </button>
+            </div>
+
+            <!-- ROUTINE LIST -->
+            <div id="routineContainer" class="hidden space-y-4">
+                 <div id="safetyAlert" class="hidden bg-red-50 text-red-800 p-4 rounded-3xl text-xs font-semibold border border-red-100 flex items-start gap-2">
+                    <span>⚠️</span> <span id="safetyAlertMsg"></span>
+                </div>
+                <div id="routineSteps" class="space-y-3 pb-4"></div>
+                <button onclick="logRoutine()" class="w-full bg-sage-dark text-white font-serif italic text-xl py-5 rounded-[24px] shadow-lg active:scale-95 transition">
+                    Log Complete Routine
+                </button>
+            </div>
+        </div>
+
+        <!-- TAB: SHELF -->
+        <div id="tab-shelf" class="hidden fade-in space-y-4">
+             <div class="bg-white rounded-[32px] p-6 shadow-sm">
+                <h2 class="font-serif italic text-2xl text-sage-dark mb-6 text-center">Digital Shelf</h2>
+                <div class="space-y-4">
+                    <input type="text" id="prodName" placeholder="Product name or active ingredient..." class="w-full bg-cream rounded-2xl p-4 text-sm outline-none focus:ring-1 focus:ring-sage placeholder:text-gray-400 font-medium">
+                    <select id="prodCat" class="w-full bg-cream rounded-2xl p-4 text-sm outline-none focus:ring-1 focus:ring-sage text-gray-600 appearance-none font-medium">
+                        <option value="" disabled selected>Select Category</option>
+                        <option value="Cleanser">Cleanser</option>
+                        <option value="Toner">Toner</option>
+                        <option value="Exfoliant">Exfoliant / Clay Mask</option>
+                        <option value="Vitamin C">Vitamin C / Whitening</option>
+                        <option value="Retinoid">Retinoid</option>
+                        <option value="Serum">Serum / Sheet Mask</option>
+                        <option value="Moisturizer">Moisturizer / Sleeping Mask</option>
+                        <option value="SPF">Sunscreen</option>
+                    </select>
+                    <div id="detectionFeedback" class="hidden text-[11px] text-sage font-black text-center bg-sage-light py-2 rounded-xl border border-sage/20 uppercase tracking-widest"></div>
+                    <button onclick="addProduct()" class="w-full bg-sage text-white font-bold py-4 rounded-2xl shadow-soft">
+                        Add to Shelf
+                    </button>
+                </div>
+            </div>
+            <div id="shelfList" class="space-y-2 pb-20"></div>
+        </div>
+
+        <!-- TAB: LOG -->
+        <div id="tab-log" class="hidden fade-in">
+             <div class="bg-white rounded-[32px] p-8 shadow-sm">
+                <h2 class="font-serif italic text-2xl text-sage-dark mb-8 text-center">Skincare Log</h2>
+                <div class="grid grid-cols-7 gap-3" id="historyGrid"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FLOATING BOTTOM NAV -->
+    <nav class="fixed bottom-8 left-6 right-6 bg-white rounded-full shadow-float p-2 flex justify-between items-center z-50 h-20 px-10">
+        <button onclick="switchTab('routine')" id="nav-routine" class="nav-btn nav-active flex items-center justify-center rounded-full">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/></svg>
+        </button>
+        <button onclick="switchTab('shelf')" id="nav-shelf" class="nav-btn nav-inactive flex items-center justify-center rounded-full">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </button>
+        <button onclick="switchTab('log')" id="nav-log" class="nav-btn nav-inactive flex items-center justify-center rounded-full">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </button>
+    </nav>
+
+    <script>
+        // --- DATA ---
+        let inventory = JSON.parse(localStorage.getItem('skinlog_v4_shelf')) || [];
+        let historyLog = JSON.parse(localStorage.getItem('skinlog_v4_logs')) || [];
+        let currentGoal = 'Clear Pores';
+        let deviceActive = false;
+
+        const ingredientDB = [
+            { keywords: ['pdrn', 'salmon', 'dna'], category: 'Serum', match: 'PDRN Repair' },
+            { keywords: ['clay', 'kaolin', 'mud', 'charcoal'], category: 'Exfoliant', match: 'Detoxifying Clay' },
+            { keywords: ['sheet mask'], category: 'Serum', match: 'Sheet Mask' },
+            { keywords: ['retinol', 'retinal', 'tretinoin', 'adapalene'], category: 'Retinoid', match: 'Vitamin A' },
+            { keywords: ['vitamin c', 'ascorbic', 'niacinamide', 'tranexamic'], category: 'Vitamin C', match: 'Brightening Active' },
+            { keywords: ['bha', 'aha', 'glycolic', 'salicylic', 'lactic'], category: 'Exfoliant', match: 'Active Acid' },
+            { keywords: ['barrier', 'ceramide', 'panthenol', 'cica', 'centella'], category: 'Moisturizer', match: 'Barrier Support' },
+            { keywords: ['spf', 'sunscreen', 'uv'], category: 'SPF', match: 'Sun Protection' }
+        ];
+
+        const goalPriorities = {
+            'Clear Pores': ['Cleanser', 'Exfoliant', 'Toner', 'Serum', 'Moisturizer'],
+            'Anti-Aging': ['Cleanser', 'Toner', 'Retinoid', 'Serum', 'Moisturizer', 'SPF'],
+            'Whitening': ['Cleanser', 'Vitamin C', 'Serum', 'Moisturizer', 'SPF'],
+            'Barrier Recovery': ['Cleanser', 'Serum', 'Moisturizer']
+        };
+
+        const deviceModes = {
+            air: { name: "AIR SHOT", color: "text-blue-500", bg: "bg-blue-50" },
+            booster: { name: "BOOSTER", color: "text-orange-500", bg: "bg-orange-50" },
+            mc: { name: "MC MODE", color: "text-green-600", bg: "bg-green-50" },
+            derma: { name: "DERMA SHOT", color: "text-purple-600", bg: "bg-purple-50" }
+        };
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const date = new Date();
+            document.getElementById('headerDate').innerText = date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
+
+            renderShelf();
+            renderHistory();
+            updateRoutineUI();
+
+            document.getElementById('deviceToggle').addEventListener('change', (e) => {
+                deviceActive = e.target.checked;
+                generateRoutine();
+            });
+
+            document.getElementById('prodName').addEventListener('input', (e) => detectCategory(e.target.value));
+        });
+
+        // --- NAVIGATION ---
+        function switchTab(tabId) {
+            document.getElementById('tab-routine').classList.add('hidden');
+            document.getElementById('tab-shelf').classList.add('hidden');
+            document.getElementById('tab-log').classList.add('hidden');
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            ['nav-routine', 'nav-shelf', 'nav-log'].forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.remove('nav-active');
+                el.classList.add('nav-inactive');
+            });
+            document.getElementById(`nav-${tabId}`).classList.replace('nav-inactive', 'nav-active');
+        }
+
+        function setGoal(goal) {
+            currentGoal = goal;
+            document.querySelectorAll('.goal-btn').forEach(b => {
+                b.className = "goal-btn py-3.5 rounded-2xl text-xs font-bold bg-white text-gray-500 shadow-sm transition-all w-full";
+                b.innerHTML = b.innerText;
+            });
+            const idMap = { 'Clear Pores': 'btn-clear', 'Anti-Aging': 'btn-anti', 'Whitening': 'btn-whitening', 'Barrier Recovery': 'btn-barrier' };
+            const activeBtn = document.getElementById(idMap[goal]);
+            if(activeBtn) {
+                activeBtn.className = "goal-btn py-3.5 rounded-2xl text-xs font-bold transition-all bg-sage text-white shadow-soft flex items-center justify-center gap-2 w-full";
+                activeBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg> ${goal === 'Whitening' ? 'Texture/Glow' : goal}`;
+            }
+            generateRoutine();
+        }
+
+        function updateRoutineUI() {
+            if (inventory.length === 0) {
+                document.getElementById('emptyShelfState').classList.remove('hidden');
+                document.getElementById('routineContainer').classList.add('hidden');
+            } else {
+                document.getElementById('emptyShelfState').classList.add('hidden');
+                document.getElementById('routineContainer').classList.remove('hidden');
+                generateRoutine();
+            }
+        }
+
+        // --- CORE ENGINE ---
+        function detectCategory(name) {
+            const low = name.toLowerCase();
+            const select = document.getElementById('prodCat');
+            const feedback = document.getElementById('detectionFeedback');
+            if(name.length < 3) { feedback.classList.add('hidden'); return; }
+            let found = ingredientDB.find(i => i.keywords.some(k => low.includes(k)));
+            if(found) {
+                select.value = found.category;
+                feedback.innerText = `✨ Detected: ${found.match}`;
+                feedback.classList.remove('hidden');
+            } else { feedback.classList.add('hidden'); }
+        }
+
+        function addProduct() {
+            const name = document.getElementById('prodName').value;
+            const cat = document.getElementById('prodCat').value;
+            if(!name || !cat) return;
+            inventory.push({ id: Date.now(), name, category: cat });
+            localStorage.setItem('skinlog_v4_shelf', JSON.stringify(inventory));
+            document.getElementById('prodName').value = '';
+            document.getElementById('prodCat').value = '';
+            document.getElementById('detectionFeedback').classList.add('hidden');
+            renderShelf();
+            updateRoutineUI();
+            switchTab('routine');
+        }
+
+        function removeProduct(id) {
+            inventory = inventory.filter(p => p.id !== id);
+            localStorage.setItem('skinlog_v4_shelf', JSON.stringify(inventory));
+            renderShelf();
+            updateRoutineUI();
+        }
+
+        function renderShelf() {
+            const list = document.getElementById('shelfList');
+            list.innerHTML = '';
+            inventory.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'flex justify-between items-center bg-white p-4 rounded-3xl shadow-sm border border-gray-100';
+                el.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-cream flex items-center justify-center text-lg">🧴</div>
+                        <div>
+                            <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">${item.category}</p>
+                            <p class="text-sm font-bold text-gray-800">${item.name}</p>
+                        </div>
+                    </div>
+                    <button onclick="removeProduct(${item.id})" class="text-gray-300 px-4 py-2 hover:text-red-400">✕</button>
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        function generateRoutine() {
+            if(inventory.length === 0) return;
+            const container = document.getElementById('routineSteps');
+            container.innerHTML = '';
+            let steps = [];
+            const priorities = goalPriorities[currentGoal];
+            priorities.forEach(cat => {
+                const prod = inventory.find(p => p.category === cat);
+                if(prod) steps.push({ ...prod, mode: null });
+            });
+
+            // Chemist Rules
+            const safety = document.getElementById('safetyAlert');
+            safety.classList.add('hidden');
+            if(steps.some(s => s.category === 'Exfoliant') && steps.some(s => s.category === 'Retinoid')) {
+                steps = steps.filter(s => s.category !== 'Retinoid');
+                document.getElementById('safetyAlertMsg').innerText = "Exfoliants & Retinoids mix poorly. Retinoid dropped for safety.";
+                safety.classList.remove('hidden');
+            }
+
+            if(deviceActive) {
+                let finalSteps = [];
+                if(currentGoal === 'Clear Pores' || steps.some(s => s.category === 'Exfoliant')) {
+                    finalSteps.push({ category: 'Pre-Step', name: 'Wash & Dry Face', mode: deviceModes.air });
+                }
+                steps.forEach(s => {
+                    let sc = {...s};
+                    if(['Serum', 'Vitamin C', 'Retinoid'].includes(s.category)) sc.mode = deviceModes.booster;
+                    if(s.category === 'Moisturizer') sc.mode = currentGoal === 'Anti-Aging' ? deviceModes.derma : deviceModes.mc;
+                    finalSteps.push(sc);
+                });
+                steps = finalSteps;
+            }
+
+            steps.forEach((step, idx) => {
+                const el = document.createElement('div');
+                const isDevice = step.mode;
+                el.className = `bg-white p-5 rounded-[32px] shadow-sm border-l-8 ${isDevice ? 'border-sage' : 'border-gray-100'} flex items-start gap-4 fade-in`;
+                el.style.animationDelay = `${idx * 0.08}s`;
+                el.innerHTML = `
+                    <div class="w-8 h-8 rounded-full bg-cream flex items-center justify-center text-xs font-black text-sage shrink-0">${idx + 1}</div>
+                    <div class="w-full">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">${step.category}</p>
+                        <h3 class="font-serif italic text-xl text-gray-800 leading-tight mb-1">${step.name}</h3>
+                        ${isDevice ? `
+                            <div class="mt-2 inline-flex items-center gap-2 ${step.mode.bg} px-3 py-1 rounded-full">
+                                <span class="text-[10px] font-bold ${step.mode.color}">⚡ ${step.mode.name}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        function logRoutine() {
+            const entry = { date: new Date().toISOString(), goal: currentGoal };
+            historyLog.push(entry);
+            localStorage.setItem('skinlog_v4_logs', JSON.stringify(historyLog));
+            renderHistory();
+            switchTab('log');
+        }
+
+        function renderHistory() {
+            const grid = document.getElementById('historyGrid');
+            grid.innerHTML = '';
+            for(let i=6; i>=0; i--) {
+                const d = new Date(); d.setDate(d.getDate() - i);
+                const hasLog = historyLog.find(l => new Date(l.date).toDateString() === d.toDateString());
+                const el = document.createElement('div');
+                el.className = "flex flex-col items-center gap-2";
+                el.innerHTML = `
+                    <span class="text-[9px] font-bold text-gray-400 uppercase">${d.toLocaleDateString('en-US', {weekday:'narrow'})}</span>
+                    <div class="w-9 h-9 rounded-full ${hasLog ? 'bg-sage text-white' : 'bg-gray-100'} flex items-center justify-center transition-all">${hasLog ? '✓' : ''}</div>
+                `;
+                grid.appendChild(el);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SkinLog</title>
+    <title>SkinLog | Beauty AI</title>
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
@@ -69,9 +69,13 @@
             background-color: transparent;
             color: #D1D5DB !important;
         }
+
+        /* Modal Animation */
+        .modal-enter { animation: modalUp 0.3s ease-out forwards; }
+        @keyframes modalUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
-<body class="text-brown-text antialiased min-h-screen pb-32">
+<body class="text-brown-text antialiased min-h-screen pb-32 relative">
 
     <!-- HEADER -->
     <header class="pt-8 pb-4 flex flex-col items-center justify-center space-y-3">
@@ -115,7 +119,6 @@
                 
                 <div class="flex items-center gap-3">
                     <span class="font-serif italic text-sm text-gray-500">Medicube Device</span>
-                    <!-- Small Integrated Toggle -->
                     <label class="inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="deviceToggle" class="sr-only peer">
                         <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sage"></div>
@@ -178,9 +181,26 @@
 
         <!-- TAB: LOG -->
         <div id="tab-log" class="hidden fade-in">
-             <div class="bg-white rounded-[32px] p-8 shadow-sm">
-                <h2 class="font-serif italic text-2xl text-sage-dark mb-8 text-center">Skincare Log</h2>
-                <div class="grid grid-cols-7 gap-3" id="historyGrid"></div>
+             <div class="bg-white rounded-[32px] p-8 shadow-sm min-h-[300px]">
+                <h2 class="font-serif italic text-2xl text-sage-dark mb-2 text-center">Skincare Log</h2>
+                <p class="text-[10px] text-gray-400 font-bold text-center uppercase tracking-widest mb-8">Tap a date to recall routine</p>
+                
+                <!-- Date Grid -->
+                <div class="grid grid-cols-7 gap-3 mb-6" id="historyGrid"></div>
+                
+                <!-- Log Details Container (Shows on click) -->
+                <div id="logDetails" class="hidden border-t border-gray-100 pt-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-[10px] font-black text-sage uppercase tracking-widest" id="logDateDisplay">DATE</span>
+                        <span class="bg-sage text-white text-[10px] font-bold px-2 py-1 rounded-md" id="logGoalDisplay">GOAL</span>
+                    </div>
+                    <div id="logStepsList" class="space-y-2">
+                        <!-- Recalled steps injected here -->
+                    </div>
+                </div>
+                <div id="logEmpty" class="hidden text-center py-4 text-gray-400 text-xs italic">
+                    No routine recorded for this day.
+                </div>
             </div>
         </div>
 
@@ -205,6 +225,7 @@
         let historyLog = JSON.parse(localStorage.getItem('skinlog_v4_logs')) || [];
         let currentGoal = 'Clear Pores';
         let deviceActive = false;
+        let lastGeneratedSteps = []; // Store current steps for logging
 
         const ingredientDB = [
             { keywords: ['pdrn', 'salmon', 'dna'], category: 'Serum', match: 'PDRN Repair' },
@@ -355,21 +376,20 @@
                 if(prod) steps.push({ ...prod, mode: null });
             });
 
-            // 1. Check Usage Limit (Professional Safety)
+            // Usage Limit
             const today = new Date().toDateString();
             const todayLogs = historyLog.filter(l => new Date(l.date).toDateString() === today);
             const usageAlert = document.getElementById('usageLimitAlert');
             
             let allowDevice = deviceActive;
-
             if (todayLogs.length >= 2) {
                 usageAlert.classList.remove('hidden');
-                allowDevice = false; // Force disable device logic
+                allowDevice = false; 
             } else {
                 usageAlert.classList.add('hidden');
             }
 
-            // 2. Chemist Safety Rules
+            // Chemist Safety
             const safety = document.getElementById('safetyAlert');
             safety.classList.add('hidden');
             if(steps.some(s => s.category === 'Exfoliant') && steps.some(s => s.category === 'Retinoid')) {
@@ -378,7 +398,7 @@
                 safety.classList.remove('hidden');
             }
 
-            // 3. Apply Device Modes
+            // Apply Device Modes
             if(allowDevice) {
                 let finalSteps = [];
                 if(currentGoal === 'Clear Pores' || steps.some(s => s.category === 'Exfoliant')) {
@@ -393,7 +413,10 @@
                 steps = finalSteps;
             }
 
-            // 4. Render
+            // Save to Global for Logging
+            lastGeneratedSteps = steps;
+
+            // Render
             steps.forEach((step, idx) => {
                 const el = document.createElement('div');
                 const isDevice = step.mode;
@@ -415,8 +438,14 @@
             });
         }
 
+        // --- NEW LOGGING SYSTEM ---
         function logRoutine() {
-            const entry = { date: new Date().toISOString(), goal: currentGoal };
+            const entry = { 
+                date: new Date().toISOString(), 
+                goal: currentGoal,
+                // Capture the exact steps used at this moment
+                recordedSteps: lastGeneratedSteps 
+            };
             historyLog.push(entry);
             localStorage.setItem('skinlog_v4_logs', JSON.stringify(historyLog));
             renderHistory();
@@ -426,16 +455,67 @@
         function renderHistory() {
             const grid = document.getElementById('historyGrid');
             grid.innerHTML = '';
+            
+            // Loop last 7 days
             for(let i=6; i>=0; i--) {
-                const d = new Date(); d.setDate(d.getDate() - i);
-                const hasLog = historyLog.find(l => new Date(l.date).toDateString() === d.toDateString());
+                const d = new Date(); 
+                d.setDate(d.getDate() - i);
+                const dateStr = d.toDateString();
+                const log = historyLog.find(l => new Date(l.date).toDateString() === dateStr);
+                const dayNum = d.getDate();
+                const dayName = d.toLocaleDateString('en-US', {weekday:'narrow'});
+
                 const el = document.createElement('div');
-                el.className = "flex flex-col items-center gap-2";
+                el.className = "flex flex-col items-center gap-2 cursor-pointer";
+                el.onclick = () => showLogDetails(log, dateStr);
+                
                 el.innerHTML = `
-                    <span class="text-[9px] font-bold text-gray-400 uppercase">${d.toLocaleDateString('en-US', {weekday:'narrow'})}</span>
-                    <div class="w-9 h-9 rounded-full ${hasLog ? 'bg-sage text-white' : 'bg-gray-100'} flex items-center justify-center transition-all">${hasLog ? '✓' : ''}</div>
+                    <span class="text-[9px] font-bold text-gray-400 uppercase">${dayName}</span>
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center transition-all border-2 ${log ? 'bg-sage text-white border-sage' : 'bg-transparent border-gray-200 text-gray-300'} font-bold text-xs">
+                        ${dayNum}
+                    </div>
                 `;
                 grid.appendChild(el);
+            }
+        }
+
+        function showLogDetails(log, dateStr) {
+            const detailContainer = document.getElementById('logDetails');
+            const emptyMsg = document.getElementById('logEmpty');
+            const list = document.getElementById('logStepsList');
+            
+            // Update Headers
+            document.getElementById('logDateDisplay').innerText = dateStr;
+            
+            if(!log) {
+                detailContainer.classList.add('hidden');
+                emptyMsg.classList.remove('hidden');
+                return;
+            }
+
+            // Populate Data
+            emptyMsg.classList.add('hidden');
+            detailContainer.classList.remove('hidden');
+            detailContainer.classList.add('modal-enter');
+            
+            document.getElementById('logGoalDisplay').innerText = log.goal;
+            list.innerHTML = '';
+
+            // Handle legacy logs (before we saved steps) vs new logs
+            const steps = log.recordedSteps || [];
+            
+            if(steps.length === 0) {
+                list.innerHTML = '<div class="text-xs text-gray-400 italic">Routine details not saved for this older entry.</div>';
+            } else {
+                steps.forEach(s => {
+                    const row = document.createElement('div');
+                    row.className = "flex justify-between items-center bg-cream p-2 rounded-lg";
+                    row.innerHTML = `
+                        <div class="text-xs font-bold text-gray-700">${s.name}</div>
+                        ${s.mode ? `<div class="text-[9px] ${s.mode.color} bg-white px-2 rounded">⚡ ${s.mode.name}</div>` : ''}
+                    `;
+                    list.appendChild(row);
+                });
             }
         }
     </script>

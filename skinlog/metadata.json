@@ -1,7 +1,0 @@
-{
-  "name": "SkinLog",
-  "description": "Smart skin consultant for generating personalized skincare routines integrated with Medicube device modes based on ingredient science and Hong Kong climate.",
-  "requestFramePermissions": [
-    "camera"
-  ]
-}

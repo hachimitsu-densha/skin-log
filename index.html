@@ -75,18 +75,13 @@
 
     <!-- HEADER -->
     <header class="pt-8 pb-4 flex flex-col items-center justify-center space-y-3">
-        <!-- Botanical Logo Icon -->
         <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm text-sage">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/>
                 <path d="M19 2L20 5L23 6L20 7L19 10L18 7L15 6L18 5L19 2Z" opacity="0.4"/>
             </svg>
         </div>
-        
-        <!-- Premium Serif Title -->
         <h1 class="font-serif italic text-4xl text-sage-dark tracking-wide">SkinLog</h1>
-        
-        <!-- Date Display Pill -->
         <div class="bg-white px-5 py-1.5 rounded-full shadow-sm">
             <span class="text-[10px] font-black tracking-[0.2em] text-brown-accent uppercase" id="headerDate">THU 5</span>
         </div>
@@ -114,18 +109,18 @@
                 </button>
             </div>
 
-            <!-- MEDICUBE TOGGLE -->
-            <div class="bg-white rounded-full p-2 pl-6 pr-3 shadow-sm flex items-center justify-between h-16">
+            <!-- ROUTINE HEADER & TOGGLE -->
+            <div class="flex items-center justify-between px-1 pt-2 pb-1">
+                <h2 class="font-serif italic text-2xl text-sage-dark">Your Routine</h2>
+                
                 <div class="flex items-center gap-3">
-                    <div class="text-amber-600">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                    </div>
-                    <span class="font-serif italic text-xl text-gray-800">Medicube Device</span>
+                    <span class="font-serif italic text-sm text-gray-500">Medicube Device</span>
+                    <!-- Small Integrated Toggle -->
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="deviceToggle" class="sr-only peer">
+                        <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sage"></div>
+                    </label>
                 </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" id="deviceToggle" class="sr-only peer">
-                    <div class="w-12 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-sage"></div>
-                </label>
             </div>
 
             <!-- EMPTY SHELF -->
@@ -136,12 +131,19 @@
                 </button>
             </div>
 
-            <!-- ROUTINE LIST -->
+            <!-- ROUTINE CONTAINER -->
             <div id="routineContainer" class="hidden space-y-4">
+                 <!-- Alerts -->
+                 <div id="usageLimitAlert" class="hidden bg-amber-50 text-amber-800 p-4 rounded-3xl text-xs font-semibold border border-amber-100 flex items-start gap-2">
+                    <span>⏳</span> <span>Daily limit reached (2/2). Skin recovery mode active.</span>
+                 </div>
                  <div id="safetyAlert" class="hidden bg-red-50 text-red-800 p-4 rounded-3xl text-xs font-semibold border border-red-100 flex items-start gap-2">
                     <span>⚠️</span> <span id="safetyAlertMsg"></span>
                 </div>
+
+                <!-- Steps -->
                 <div id="routineSteps" class="space-y-3 pb-4"></div>
+                
                 <button onclick="logRoutine()" class="w-full bg-sage-dark text-white font-serif italic text-xl py-5 rounded-[24px] shadow-lg active:scale-95 transition">
                     Log Complete Routine
                 </button>
@@ -353,7 +355,21 @@
                 if(prod) steps.push({ ...prod, mode: null });
             });
 
-            // Chemist Rules
+            // 1. Check Usage Limit (Professional Safety)
+            const today = new Date().toDateString();
+            const todayLogs = historyLog.filter(l => new Date(l.date).toDateString() === today);
+            const usageAlert = document.getElementById('usageLimitAlert');
+            
+            let allowDevice = deviceActive;
+
+            if (todayLogs.length >= 2) {
+                usageAlert.classList.remove('hidden');
+                allowDevice = false; // Force disable device logic
+            } else {
+                usageAlert.classList.add('hidden');
+            }
+
+            // 2. Chemist Safety Rules
             const safety = document.getElementById('safetyAlert');
             safety.classList.add('hidden');
             if(steps.some(s => s.category === 'Exfoliant') && steps.some(s => s.category === 'Retinoid')) {
@@ -362,7 +378,8 @@
                 safety.classList.remove('hidden');
             }
 
-            if(deviceActive) {
+            // 3. Apply Device Modes
+            if(allowDevice) {
                 let finalSteps = [];
                 if(currentGoal === 'Clear Pores' || steps.some(s => s.category === 'Exfoliant')) {
                     finalSteps.push({ category: 'Pre-Step', name: 'Wash & Dry Face', mode: deviceModes.air });
@@ -376,6 +393,7 @@
                 steps = finalSteps;
             }
 
+            // 4. Render
             steps.forEach((step, idx) => {
                 const el = document.createElement('div');
                 const isDevice = step.mode;
